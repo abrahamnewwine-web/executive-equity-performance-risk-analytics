@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Executive Equity Performance &amp; Risk Analytics</title>
+  <link rel="stylesheet" href="/static/css/dashboard.css">
+  <script src="/static/vendor/chart.umd.min.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <div class="brand-badge">EQ</div>
+        <div>
+          <div class="brand-title">EQUITY ANALYTICS</div>
+          <div class="brand-sub">Portfolio Intelligence</div>
+        </div>
+      </div>
+
+      <div class="filter-title">FILTERS</div>
+      <div class="ticker-group">
+        <div class="tg-label">Ticker Selection</div>
+        <div class="ticker-chips" id="tickerChips">
+          {% for t in options.tickers %}
+          <button class="t-chip active" data-ticker="{{ t.ticker }}">{{ t.ticker }}</button>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="slicer"><label for="fYear">Year</label><select id="fYear"><option value="">All</option>{% for y in options.years %}<option value="{{ y }}">{{ y }}</option>{% endfor %}</select></div>
+      <div class="slicer"><label for="fQuarter">Quarter</label><select id="fQuarter"><option value="">All</option>{% for q in options.quarters %}<option value="{{ q }}">Q{{ q }}</option>{% endfor %}</select></div>
+      <div class="slicer"><label for="fMonth">Month</label><select id="fMonth"><option value="">All</option>{% for m in options.months %}<option value="{{ m.month_num }}">{{ m.month_name }}</option>{% endfor %}</select></div>
+      <div class="slicer"><label for="fWeekday">Weekday</label><select id="fWeekday"><option value="">All</option>{% for w in options.weekdays %}<option value="{{ w.weekday_num }}">{{ w.weekday_name }}</option>{% endfor %}</select></div>
+
+      <div class="side-btns">
+        <button id="btnReset" class="btn-sec">All 5 Equities</button>
+        <button id="btnExport" class="btn-pri">Export Ranking CSV</button>
+      </div>
+
+      <div class="stocks-count-box">
+        <div class="sc-lbl">STOCKS ANALYZED</div>
+        <div class="sc-val" id="kStocksCount">5</div>
+        <div class="sc-dates" id="kDateSpan">{{ options.date_bounds.min_date }} → {{ options.date_bounds.max_date }}</div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="top-bar">
+        <div>
+          <h1>EXECUTIVE EQUITY PERFORMANCE &amp; RISK ANALYTICS</h1>
+          <p id="headerSub">Comparative Analysis of AAPL, AMZN, MSFT, NVDA &amp; TSLA · Yahoo Finance Real Daily Market Data</p>
+        </div>
+        <nav class="view-tabs">
+          <button class="tab-btn active" data-view="executive">Executive Dashboard</button>
+          <button class="tab-btn" data-view="performance">Performance Analysis</button>
+          <button class="tab-btn" data-view="risk">Risk Analysis</button>
+          <button class="tab-btn" data-view="insight">Executive Insight</button>
+        </nav>
+      </header>
+
+      <section class="kpi-grid-18">
+        <div class="w-kpi"><div class="wl">Avg Close Price</div><div class="wv" id="kAvgClose">--</div></div>
+        <div class="w-kpi"><div class="wl">Lowest Close</div><div class="wv" id="kLowClose">--</div></div>
+        <div class="w-kpi"><div class="wl">Highest Close</div><div class="wv" id="kHighClose">--</div></div>
+        <div class="w-kpi"><div class="wl">Total Return %</div><div class="wv" id="kTotalRet">--</div></div>
+        <div class="w-kpi"><div class="wl">CAGR %</div><div class="wv" id="kCagr">--</div></div>
+        <div class="w-kpi"><div class="wl">Growth of $10K</div><div class="wv" id="kGrowth10k">--</div></div>
+
+        <div class="w-kpi"><div class="wl">52-Week Low</div><div class="wv" id="k52Low">--</div></div>
+        <div class="w-kpi"><div class="wl">52-Week High</div><div class="wv" id="k52High">--</div></div>
+        <div class="w-kpi"><div class="wl">Beginning Price</div><div class="wv" id="kBegPrice">--</div></div>
+        <div class="w-kpi"><div class="wl">Ending Price</div><div class="wv" id="kEndPrice">--</div></div>
+        <div class="w-kpi"><div class="wl">Best Return %</div><div class="wv" id="kBestRet">--</div></div>
+        <div class="w-kpi"><div class="wl">Worst Drawdown %</div><div class="wv" id="kMaxDD">--</div></div>
+
+        <div class="w-kpi"><div class="wl">Sum of Volume</div><div class="wv" id="kSumVol">--</div></div>
+        <div class="w-kpi"><div class="wl">Trading Days</div><div class="wv" id="kDays">--</div></div>
+        <div class="w-kpi"><div class="wl">Avg Daily Volume</div><div class="wv" id="kAvgVol">--</div></div>
+        <div class="w-kpi"><div class="wl">Running Peak</div><div class="wv" id="kPeak">--</div></div>
+        <div class="w-kpi"><div class="wl">Top Sharpe Ratio</div><div class="wv" id="kSharpe">--</div></div>
+        <div class="w-kpi"><div class="wl">Best Performing</div><div class="wv" id="kBestTicker">--</div></div>
+      </section>
+
+      <!-- VIEW 1: EXECUTIVE DASHBOARD -->
+      <div id="view-executive" class="view-pane active">
+        <section class="grid-2">
+          <div class="panel"><div class="p-title">CLOSE PRICE TREND OVER TIME</div><div class="c-box"><canvas id="cCloseTrend"></canvas></div></div>
+          <div class="panel"><div class="p-title">TOTAL RETURNS GROWTH OF ($10,000 INVESTMENT)</div><div class="c-box"><canvas id="cGrowth10k"></canvas></div></div>
+        </section>
+        <section class="grid-4-exec">
+          <div class="panel"><div class="p-title">RISK VS RETURN (VOLATILITY vs TOTAL RETURN %)</div><div class="c-box-sm"><canvas id="cRiskReturn"></canvas></div></div>
+          <div class="panel"><div class="p-title">TOTAL VOLUME BY STOCK</div><div class="c-box-sm"><canvas id="cVolStock"></canvas></div></div>
+          <div class="panel"><div class="p-title">MONTHLY TOTAL RETURN % (RECENT 6M)</div><div class="c-box-sm"><canvas id="cMonthlyRet"></canvas></div></div>
+          <div class="panel">
+            <div class="p-title">PERFORMANCE RANKING</div>
+            <div class="tbl-wrap">
+              <table>
+                <thead><tr><th>Rank</th><th>Ticker</th><th>Return %</th><th>CAGR %</th><th>Vol %</th><th>Max DD</th></tr></thead>
+                <tbody id="rankingBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW 2: PERFORMANCE ANALYSIS -->
+      <div id="view-performance" class="view-pane">
+        <section class="grid-2">
+          <div class="panel"><div class="p-title">CUMULATIVE NORMALIZED RETURN (%) FROM PERIOD START</div><div class="c-box-lg"><canvas id="cNormPerf"></canvas></div></div>
+          <div class="panel"><div class="p-title">TOTAL RETURN % vs CAGR % COMPARISON</div><div class="c-box-lg"><canvas id="cRetVsCagr"></canvas></div></div>
+        </section>
+        <section class="panel" style="margin-top:10px;">
+          <div class="p-title">DETAILED EQUITY PERFORMANCE SCORECARD</div>
+          <table>
+            <thead><tr><th>Rank</th><th>Ticker</th><th style="text-align:left">Company</th><th>Start ($)</th><th>End ($)</th><th>$10K Value</th><th>Total Return %</th><th>CAGR %</th><th>Total Volume</th></tr></thead>
+            <tbody id="perfScorecardBody"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <!-- VIEW 3: RISK ANALYSIS -->
+      <div id="view-risk" class="view-pane">
+        <section class="grid-2">
+          <div class="panel"><div class="p-title">UNDERWATER DRAWDOWN TRAJECTORY (%)</div><div class="c-box-lg"><canvas id="cDrawdown"></canvas></div></div>
+          <div class="panel"><div class="p-title">ROLLING 20-DAY ANNUALIZED VOLATILITY (%)</div><div class="c-box-lg"><canvas id="cRollingVol"></canvas></div></div>
+        </section>
+        <section class="panel" style="margin-top:10px;">
+          <div class="p-title">DOWNSIDE RISK &amp; RISK-ADJUSTED RETURN METRICS</div>
+          <table>
+            <thead><tr><th>Ticker</th><th>Ann. Volatility %</th><th>Max Drawdown %</th><th>Daily 95% VaR</th><th>Sharpe Ratio</th><th>Sortino Ratio</th></tr></thead>
+            <tbody id="riskTableBody"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <!-- VIEW 4: EXECUTIVE INSIGHT -->
+      <div id="view-insight" class="view-pane">
+        <section class="insights-grid" id="insightsContainer"></section>
+        <section class="panel" style="margin-top:10px;">
+          <div class="p-title">METHODOLOGY &amp; RECONCILIATION GOVERNANCE NOTES</div>
+          <p class="gov-text">
+            • <strong>Source Data:</strong> Historical daily closing prices and trading volumes retrieved from Yahoo Finance for AAPL, AMZN, MSFT, NVDA, and TSLA.<br>
+            • <strong>Annualized Return (CAGR):</strong> Computed using 252 trading days per year convention: (P_end / P_start)^(252 / (N - 1)) - 1.<br>
+            • <strong>Risk Metrics:</strong> Annualized volatility = std(daily_return) * sqrt(252); Sharpe Ratio uses a 4.0% annualized risk-free benchmark; Maximum Drawdown reflects peak-to-trough decline strictly within the active filter slice.<br>
+            • <strong>Disclaimer:</strong> Analytical portfolio intelligence for historical risk/return evaluation only; historical performance does not guarantee future returns.
+          </p>
+        </section>
+      </div>
+    </main>
+  </div>
+  <script src="/static/js/dashboard.js"></script>
+</body>
+</html>
