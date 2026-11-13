@@ -1,0 +1,6 @@
+ticker_id,ticker,company_name,sector,exchange
+1,AAPL,Apple Inc.,Consumer Technology,NASDAQ
+2,AMZN,Amazon.com Inc.,Cloud & E-Commerce,NASDAQ
+3,MSFT,Microsoft Corporation,Enterprise Software & Cloud,NASDAQ
+4,NVDA,NVIDIA Corporation,Semiconductors & AI,NASDAQ
+5,TSLA,"Tesla, Inc.",Automotive & Clean Energy,NASDAQ

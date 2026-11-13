@@ -1,0 +1,36 @@
+// Executive Equity Performance & Risk Analytics - Governed DAX Measure Library
+
+Trading Days = DISTINCTCOUNT(fact_equity_daily[date_key])
+Average Closing Price = AVERAGE(fact_equity_daily[close_price])
+Lowest Closing Price = MIN(fact_equity_daily[close_price])
+Highest Closing Price = MAX(fact_equity_daily[close_price])
+Sum of Volume = SUM(fact_equity_daily[volume])
+Avg Daily Volume = AVERAGEX(VALUES(dim_date[trade_date]), CALCULATE(SUM(fact_equity_daily[volume])))
+
+Beginning Price =
+VAR MinDate = MIN(dim_date[date_key])
+RETURN CALCULATE(AVERAGE(fact_equity_daily[close_price]), dim_date[date_key] = MinDate)
+
+Ending Price =
+VAR MaxDate = MAX(dim_date[date_key])
+RETURN CALCULATE(AVERAGE(fact_equity_daily[close_price]), dim_date[date_key] = MaxDate)
+
+Total Return % =
+DIVIDE([Ending Price] - [Beginning Price], [Beginning Price], 0)
+
+CAGR % =
+VAR DaysCount = MAX([Trading Days] - 1, 1)
+RETURN POWER(1 + [Total Return %], 252 / DaysCount) - 1
+
+Growth of $10K =
+10000 * (1 + [Total Return %])
+
+Annualized Volatility % =
+STDEV.S(fact_equity_daily[daily_return]) * SQRT(252)
+
+Max Drawdown % =
+MIN(fact_equity_daily[drawdown_pct])
+
+Sharpe Ratio =
+VAR AnnRet = AVERAGE(fact_equity_daily[daily_return]) * 252
+RETURN DIVIDE(AnnRet - 0.04, [Annualized Volatility %], 0)
